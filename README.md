@@ -1,56 +1,58 @@
-#Simple Authentication with Bcrypt
+# Simple Authentication with Bcrypt
 
-This tutorial is for adding authentication to a vanilla Ruby on Rails app using Bcrypt and has\_secure\_password. 
+>Adapted from [this gist](https://gist.github.com/thebucknerlife/10090014).
+
+This tutorial is for adding authentication to a vanilla Ruby on Rails app using Bcrypt and has\_secure\_password.
 
 The steps below are based on Ryan Bates's approach from [
-Railscast \#250 Authentication from Scratch (revised)](http://railscasts.com/episodes/250-authentication-from-scratch-revised). 
+Railscast \#250 Authentication from Scratch (revised)](http://railscasts.com/episodes/250-authentication-from-scratch-revised).
 
 You can see the final source code here: [repo](https://github.com/thebucknerlife/gif_vault). I began with a stock rails app using ``` rails new gif_vault ```
 
-##Steps
+## Steps
 
-1. Create a user model with a name, email and password\_digest (all strings) by entering the following command into the command line: ``` rails generate model user name email password_digest ```. 
+1. Create a user model with a name, email and password\_digest (all strings) by entering the following command into the command line: ``` rails generate model user name email password_digest ```.
 
     *Note:* If you already have a user model or you're going to use a different model for authentication, that model must have an attribute names password\_digest and some kind of attribute to identify the user (like an email or a username).
 2. Run ``` rake db:migrate ``` in the command line to migrate the database.
 3. Add these routes below to your routes.rb file. Notice I also deleted all the comments inside that file. Don't forget to leave the trailing ``` end ```, though.
-    
+
     ```ruby
     # config/routes.rb
 
     GifVault::Application.routes.draw do
-        
+
         # This route sends requests to our naked url to the *cool* action in the *gif* controller.
         root to: 'gif#cool'
-        
-        # I've created a gif controller so I have a page I can secure later. 
+
+        # I've created a gif controller so I have a page I can secure later.
         # This is optional (as is the root to: above).
         get '/cool' => 'gif#cool'
         get '/sweet' => 'gif#sweet'
 
-        # These routes will be for signup. The first renders a form in the browse, the second will 
+        # These routes will be for signup. The first renders a form in the browse, the second will
         # receive the form and create a user in our database using the data given to us by the user.
         get '/signup' => 'users#new'
         post '/users' => 'users#create'
 
     end
     ```
-    
-3. Create a users controller: 
+
+3. Create a users controller:
 
     ```ruby
     # app/controllers/users_controller.rb
-    
+
     class UsersController < ApplicationController
 
     end
     ```
-    
-4. Add a **new** action (for rendering the signup form) and a **create** action (for receiving the form and creating a user with the form's parameters.): 
+
+4. Add a **new** action (for rendering the signup form) and a **create** action (for receiving the form and creating a user with the form's parameters.):
 
     ```ruby
     # app/controllers/users_controller.rb
-    
+
     class UsersController < ApplicationController
 
         def new
@@ -61,12 +63,12 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     end
     ```
-    
-5. Now create the view file where we put the signup form. 
+
+5. Now create the view file where we put the signup form.
 
     ```html+erb
     <!-- app/views/users/new.html.erb -->
-    
+
     <h1>Signup!</h1>
 
     <%= form_for :user, url: '/users' do |f| %>
@@ -79,10 +81,10 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     <% end %>
     ```
-   *A note on Rail's conventions:* This view file is for the **new** action of the **users controller**. As a result, we save the file here: ``` /app/views/users/new.html.erb ```. The file is called **new**.html.erb and it is saved inside the views folder, in a folder we created called **users**. 
-   
+   *A note on Rail's conventions:* This view file is for the **new** action of the **users controller**. As a result, we save the file here: ``` /app/views/users/new.html.erb ```. The file is called **new**.html.erb and it is saved inside the views folder, in a folder we created called **users**.
+
    That's the convention: view files are inside a folder with the same name as the controller and are named for the action they render.
-    
+
 6. Add logic to **create** action and add the private ``` user_params ``` method to sanitize the input from the form (this is a new Rails 4 thing and it's required). You might need to adjust the parameters inside the ``` .permit() ``` method based on how you setup your User model.
 
     ```ruby
@@ -109,7 +111,7 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
   end
     ```
 
-7. Go to your Gemfile and uncomment the 'bcrypt' gem. We need bcrypt to securely store passwords in our database. 
+7. Go to your Gemfile and uncomment the 'bcrypt' gem. We need bcrypt to securely store passwords in our database.
 
     ```ruby
     source 'https://rubygems.org'
@@ -126,30 +128,30 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
     gem 'bcrypt', '~> 3.1.7'
 
     ...
-    
+
     ```
-    
+
 7. Go to the User model file and add ``` has_secure_password ```. This is the line of code that gives our User model authentication methods via bcrypt.
 
     ```ruby
     # app/models/user.rb
-        
+
     class User < ActiveRecord::Base
 
       has_secure_password
 
     end
     ```
-    
+
 9. Run ``` bundle install ``` from the terminal then restart your rails server.
 
    *Note:* Windows users might have issues with bcrypt. If so, copy the error into Google and look for answers on Stack Overflow. There is documentation online for how to fix Windows so the bcrypt works.
-   
+
 10. Create a sessions controller. This is where we create (aka login) and destroy (aka logout) sessions.
 
     ```ruby
     # app/controllers/sessions_controller.rb
-    
+
     class SessionsController < ApplicationController
 
       def new
@@ -163,12 +165,12 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     end
     ```
-    
-11. Create a form for user's to login with.
+
+11. Create a form for users to login with.
 
     ```html+erb
     <!-- app/views/sessions/new.html.erb -->
-    
+
     <h1>Login</h1>
 
     <%= form_tag '/login' do %>
@@ -179,7 +181,7 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     <% end %>
     ```
-    
+
 12. Update your routes file to include new routes for the sessions controller.
 
     ```ruby
@@ -194,7 +196,7 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
       get '/signup' => 'users#new'
       post '/users' => 'users#create'
-      
+
     end
     ```
 
@@ -202,12 +204,12 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     ```ruby
       # app/controllers/sessions_controller.rb
-    
+
       def create
         user = User.find_by_email(params[:email])
         # If the user exists AND the password entered is correct.
         if user && user.authenticate(params[:password])
-          # Save the user id inside the browser cookie. This is how we keep the user 
+          # Save the user id inside the browser cookie. This is how we keep the user
           # logged in when they navigate around our website.
           session[:user_id] = user.id
           redirect_to '/'
@@ -222,12 +224,12 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
         redirect_to '/login'
       end
     ```
-    
-14. Update the application controller with new methods to look up the user, if they're logged in, and save their user object to a variable called @current\_user. The ``` helper_method ``` line below current\_user allows us to use ``` @current_user ``` in our view files. Authorize is for sending someone to the login page if they aren't logged in - this is how we keep certain pages our site secure... user's have to login before seeing them.
+
+14. Update the application controller with new methods to look up the user, if they're logged in, and save their user object to a variable called @current\_user. The `helper_method` line below current\_user allows us to use `@current_user` in our view files. Authorize is for sending someone to the login page if they aren't logged in - this is how we keep certain pages our site secure... user's have to login before seeing them.
 
     ```ruby
     # app/controllers/application_controller.rb
-    
+
     class ApplicationController < ActionController::Base
       # Prevent CSRF attacks by raising an exception.
       # For APIs, you may want to use :null_session instead.
@@ -267,7 +269,7 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
     ```html+erb
     <!-- app/views/layout/application.html.erb -->
-    
+
     <!DOCTYPE html>
     <html>
     <head>
@@ -293,7 +295,7 @@ You can see the final source code here: [repo](https://github.com/thebucknerlife
 
 ## Things Missing
 
-* Adding validations (this afternoon)
+* Adding validations. This is something you're equipped to do yourself!
 
 --
-All done! Feel free to fork and update this. Reach me at @thebucknerlife on Twitter.
+All done! Feel free to fork and update this. Reach the original author at @thebucknerlife on Twitter.
